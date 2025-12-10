@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     } 
     else if (strcmp(argv[1], "-t") == 0) 
     {
-        printf("Not implemented yet for %s\n", argv[2]);  
+        perform_traceroute(argv[2], 30, 5000);  // Default: 30 max hops, 5000ms timeout
     } 
     else 
     {

@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-void perform_traceroute(const char *host, uint32_t max_hops, uint32_t timeout);
+void perform_traceroute(const char *host, uint32_t max_hops, uint32_t timeout_ms);
 
 #endif // TRACE_H

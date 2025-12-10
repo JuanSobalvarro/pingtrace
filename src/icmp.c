@@ -35,20 +35,25 @@ int send_icmp_request(SOCKET sock, const char *ip_str, icmp_echo_t *request, uin
     }
 }
 
-int receive_icmp_reply(SOCKET sock, char *recv_buffer, int buffer_len, struct sockaddr_in *sender_addr, uint32_t timeout_ms)
+int receive_icmp_reply(
+    SOCKET sock,
+    char *recv_buffer,
+    int buffer_len,
+    struct sockaddr_in *sender_addr,
+    uint32_t timeout_ms)
 {
     int addr_len = sizeof(*sender_addr);
-    
-    struct timeval tv;
-    tv.tv_sec = timeout_ms;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
-    
-    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) == SOCKET_ERROR)
+
+    // WINDOWS: timeouts are DWORD in milliseconds (not timeval!)
+    DWORD tv = timeout_ms;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,
+                   (const char*)&tv, sizeof(tv)) == SOCKET_ERROR)
     {
         fprintf(stderr, "Failed to set socket timeout. Error: %d\n", WSAGetLastError());
         return -1;
     }
 
+    // Receive raw IP packet
     int bytes_received = recvfrom(
         sock,
         recv_buffer,
@@ -61,17 +66,30 @@ int receive_icmp_reply(SOCKET sock, char *recv_buffer, int buffer_len, struct so
     if (bytes_received == SOCKET_ERROR)
     {
         int err = WSAGetLastError();
-        if (err == WSAETIMEDOUT) {
-            // Timeout, no print here
-            // printf("timeout reached\n");
-        } else {
+        if (err != WSAETIMEDOUT)
             fprintf(stderr, "Failed to receive ICMP reply. Error: %d\n", err);
-        }
         return -1;
     }
-    
+
+    // Sanity: must have at least IP header
+    if (bytes_received < sizeof(struct ip_header))
+        return -1;
+
+    // Extract IP header of response
+    struct ip_header *ip_hdr = (struct ip_header *)recv_buffer;
+    int ip_header_len = (ip_hdr->ihl_version & 0x0F) * 4;
+
+    // Basic sanity check
+    if (ip_header_len < 20 || ip_header_len > 60)
+        return -1;
+
+    if (bytes_received < ip_header_len + sizeof(icmp_header_t))
+        return -1;
+
+    // all goodd
     return bytes_received;
 }
+
 
 icmp_echo_t* create_icmp_request(uint32_t data_size)
 {
