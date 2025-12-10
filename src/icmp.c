@@ -73,18 +73,21 @@ int receive_icmp_reply(
 
     // Sanity: must have at least IP header
     if (bytes_received < sizeof(struct ip_header))
+    {
+        // fprintf(stderr, "Received packet too small for IP header: %d bytes\n", bytes_received);
         return -1;
+    }
 
     // Extract IP header of response
     struct ip_header *ip_hdr = (struct ip_header *)recv_buffer;
     int ip_header_len = (ip_hdr->ihl_version & 0x0F) * 4;
 
     // Basic sanity check
-    if (ip_header_len < 20 || ip_header_len > 60)
-        return -1;
+    // if (ip_header_len < 20 || ip_header_len > 60)
+    //     return -1;
 
-    if (bytes_received < ip_header_len + sizeof(icmp_header_t))
-        return -1;
+    // if (bytes_received < ip_header_len + sizeof(icmp_header_t))
+    //     return -1;
 
     // all goodd
     return bytes_received;
