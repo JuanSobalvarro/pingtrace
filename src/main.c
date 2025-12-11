@@ -1,13 +1,8 @@
-/*
-* Main entry point for pingtrace, based on arguments we will run a ping (-p)
-* or a traceroute (-t) to a given host.
-*/
 #include <stdio.h>
-#include <string.h>
 #include "ping.h"
 #include "trace.h"
-#include "socket.h"
-#include "icmp.h"
+#include "config.h"
+#include "argparser.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,28 +12,33 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (argc < 3) 
+    configure_firewall(1);
+
+    config_t cfg;
+    if (parse_arguments(argc, argv, &cfg) != 0) 
     {
-        printf("Usage: %s -p|-t <host> [other options]\n", argv[0]);
+        printf("Usage: pingtrace -p|-t <host> [options]\n");
+        cleanup_socket_library();
         return 1;
     }
-    
-    if (strcmp(argv[1], "-p") == 0) 
+
+    if (cfg.mode == 1)   // ping
     {
-        perform_ping(argv[2], 4, 32, 1000);  // Default: 4 pings, 32 bytes, 1000ms timeout
-    } 
-    else if (strcmp(argv[1], "-t") == 0) 
-    {
-        perform_traceroute(argv[2], 30, 5000);  // Default: 30 max hops, 5000ms timeout
-    } 
-    else 
-    {
-        printf("Invalid option: %s\n", argv[1]);
-        printf("Usage: %s -p|-t <host> [other options]\n", argv[0]);
-        return 1;
+        perform_ping(
+            cfg.host,
+            cfg.count,
+            cfg.size,
+            cfg.timeout_ms,
+            cfg.ttl
+        );
     }
+    else if (cfg.mode == 2) // traceroute
+    {
+        perform_traceroute(cfg.host, 30, 5000);
+    }
+
+    configure_firewall(0);
 
     cleanup_socket_library();
-
     return 0;
 }

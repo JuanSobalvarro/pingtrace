@@ -24,7 +24,7 @@ int initialize_winsock();
 
 void cleanup_socket_library();
 
-SOCKET create_icmp_socket();
+SOCKET create_icmp_socket(uint8_t ttl);
 
 void close_socket(SOCKET sock);
 

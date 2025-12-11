@@ -32,7 +32,7 @@ void perform_traceroute(const char *host, uint32_t max_hops, uint32_t timeout_ms
     init_high_res_timer();
 
     // create a icmp socket so we can send and receive icmp packets
-    SOCKET sock = create_icmp_socket();
+    SOCKET sock = create_icmp_socket(1); // default ttl for trace route
     if (sock == INVALID_SOCKET) 
     {
         printf("Failed to create ICMP socket.\n");

@@ -1,6 +1,6 @@
 #include "ping.h"
 
-void perform_ping(const char *host, uint32_t count, uint32_t data_size, uint32_t timeout_ms)
+void perform_ping(const char *host, uint32_t count, uint32_t data_size, uint32_t timeout_ms, uint8_t ttl)
 {
     // Resolve host to IP
     struct addrinfo hints = {0};
@@ -8,7 +8,8 @@ void perform_ping(const char *host, uint32_t count, uint32_t data_size, uint32_t
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
     struct addrinfo *result = NULL;
-    if (getaddrinfo(host, NULL, &hints, &result) != 0) {
+    if (getaddrinfo(host, NULL, &hints, &result) != 0) 
+    {
         printf("Ping request could not find host %s. Please check the name and try again.\n", host);
         return;
     }
@@ -20,7 +21,7 @@ void perform_ping(const char *host, uint32_t count, uint32_t data_size, uint32_t
 
     init_high_res_timer();
 
-    SOCKET sock = create_icmp_socket();
+    SOCKET sock = create_icmp_socket(ttl);
     if (sock == INVALID_SOCKET) 
     {
         printf("Failed to create ICMP socket. Invalid socket.\n");
@@ -115,16 +116,24 @@ icmp_echo_t* receive_ping_reply(
     int bytes_received = receive_icmp_reply(
         sock, recv_buffer, MAX_PACKET_SIZE, sender_addr, timeout_ms);
 
-    if (bytes_received < 0) {
+    if (bytes_received < 0) 
+    {
         printf("Request timed out.\n");
         return NULL;
     }
+
+    // printf("Hex data received (%d bytes): ", bytes_received);
+    // for (int i = 0; i < bytes_received; i++) 
+    // {
+    //     printf("%02X ", (unsigned char)recv_buffer[i]);
+    // }
 
     // Parse IP header
     struct ip_header *ip_hdr = (struct ip_header*)recv_buffer;
     int ip_header_len = (ip_hdr->ihl_version & 0x0F) * 4;
 
-    if (bytes_received < ip_header_len + sizeof(icmp_header_t)) {
+    if (bytes_received < ip_header_len + sizeof(icmp_header_t)) 
+    {
         printf("Malformed ICMP packet.\n");
         return NULL;
     }
@@ -171,12 +180,18 @@ icmp_echo_t* receive_ping_reply(
     }
 
     // Case 3: Time Exceeded (Type 11)
-    if (type == 11) {
-        if (code == 0) {
+    if (type == 11) 
+    {
+        if (code == 0) 
+        {
             printf("TTL expired in transit.\n");
-        } else if (code == 1) {
+        } 
+        else if (code == 1) 
+        {
             printf("Fragment reassembly time exceeded.\n");
-        } else {
+        } 
+        else 
+        {
             printf("Time exceeded (code %u).\n", code);
         }
         return NULL;

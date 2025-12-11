@@ -44,7 +44,7 @@ int receive_icmp_reply(
 {
     int addr_len = sizeof(*sender_addr);
 
-    // WINDOWS: timeouts are DWORD in milliseconds (not timeval!)
+    // timeouts are DWORD in milliseconds (windows)
     DWORD tv = timeout_ms;
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,
                    (const char*)&tv, sizeof(tv)) == SOCKET_ERROR)
@@ -68,14 +68,14 @@ int receive_icmp_reply(
         int err = WSAGetLastError();
         if (err != WSAETIMEDOUT)
             fprintf(stderr, "Failed to receive ICMP reply. Error: %d\n", err);
-        return -1;
+        return bytes_received;
     }
 
-    // Sanity: must have at least IP header
+    // must have at least IP header
     if (bytes_received < sizeof(struct ip_header))
     {
         // fprintf(stderr, "Received packet too small for IP header: %d bytes\n", bytes_received);
-        return -1;
+        return bytes_received;
     }
 
     // Extract IP header of response
@@ -83,8 +83,8 @@ int receive_icmp_reply(
     int ip_header_len = (ip_hdr->ihl_version & 0x0F) * 4;
 
     // Basic sanity check
-    // if (ip_header_len < 20 || ip_header_len > 60)
-    //     return -1;
+    if (ip_header_len < 20 || ip_header_len > 60)
+        return -1;
 
     // if (bytes_received < ip_header_len + sizeof(icmp_header_t))
     //     return -1;
