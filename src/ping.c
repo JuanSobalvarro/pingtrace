@@ -68,6 +68,7 @@ void perform_ping(const char *host, uint32_t count, uint32_t data_size, uint32_t
         if (echo_reply == NULL) 
         {
             free(request);
+            Sleep(1000); // 1 second
             continue;
         }
 

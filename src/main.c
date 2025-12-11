@@ -12,8 +12,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    configure_firewall(1);
-
+    
     config_t cfg;
     if (parse_arguments(argc, argv, &cfg) != 0) 
     {
@@ -21,6 +20,8 @@ int main(int argc, char *argv[])
         cleanup_socket_library();
         return 1;
     }
+    
+    // configure_firewall(1);
 
     if (cfg.mode == 1)   // ping
     {
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
         perform_traceroute(cfg.host, 30, 5000);
     }
 
-    configure_firewall(0);
+    // configure_firewall(0);
 
     cleanup_socket_library();
     return 0;
